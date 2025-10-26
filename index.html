@@ -7,23 +7,120 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>抢红包啦！</h1>
-        <div class="red-envelope" id="redEnvelope">
-            <div class="envelope-top"></div>
-            <div class="envelope-bottom"></div>
-            <span class="text">恭喜发财</span>
+    <!-- Canvas动画层 -->
+    <canvas id="animationCanvas"></canvas>
+    
+    <div class="game-layout">
+        <!-- 左侧红包记录 -->
+        <div class="record-panel">
+            <h3>我的红包记录</h3>
+            <div class="records-list" id="recordsList">
+                <p class="no-records">暂无记录</p>
+            </div>
         </div>
-        <div class="result-modal" id="resultModal">
-            <div class="modal-content">
-                <span class="close-btn" id="closeBtn">&times;</span>
-                <div class="result-amount" id="resultAmount">¥0.00</div>
-                <p class="result-text">恭喜您抢到了红包！</p>
-                <button class="again-btn" id="againBtn">再来一个</button>
+        
+        <!-- 中间游戏区域 -->
+        <div class="container">
+            <h1>抢红包啦！</h1>
+            
+            <!-- 红包设置 -->
+            <div class="red-packet-settings">
+                <div class="setting-group">
+                    <label for="totalAmount">总金额(元):</label>
+                    <input type="number" id="totalAmount" min="0.01" step="0.01" value="100" placeholder="请输入总金额">
+                </div>
+                <div class="setting-group">
+                    <label for="totalCount">红包个数:</label>
+                    <input type="number" id="totalCount" min="1" max="100" value="10" placeholder="请输入红包个数">
+                </div>
+                <button class="create-btn" id="createBtn">创建红包</button>
+            </div>
+            
+            <!-- 红包皮肤选择 -->
+            <div class="skin-selection">
+                <h4>选择红包样式：</h4>
+                <div class="skins">
+                    <div class="skin-item active" data-skin="normal">
+                        <div class="skin-preview normal"></div>
+                        <span>普通红包</span>
+                    </div>
+                    <div class="skin-item" data-skin="birthday">
+                        <div class="skin-preview birthday"></div>
+                        <span>生日红包</span>
+                    </div>
+                    <div class="skin-item" data-skin="festival">
+                        <div class="skin-preview festival"></div>
+                        <span>节日红包</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 红包区域 -->
+            <div class="envelope-area">
+                <div class="red-envelope normal" id="redEnvelope">
+                    <div class="envelope-top"></div>
+                    <div class="envelope-bottom"></div>
+                    <span class="text">恭喜发财</span>
+                </div>
+                <div class="packet-info">
+                    <span class="remaining-count" id="remainingCount">剩余 0 个</span>
+                </div>
+            </div>
+            
+            <!-- 群聊模拟 -->
+            <div class="group-chat">
+                <h4>群聊抢红包</h4>
+                <div class="chat-messages" id="chatMessages">
+                    <p class="system-message">请先创建红包开始游戏</p>
+                </div>
+            </div>
+            
+            <!-- 结果弹窗 -->
+            <div class="result-modal" id="resultModal">
+                <div class="modal-content">
+                    <span class="close-btn" id="closeBtn">&times;</span>
+                    <h2>恭喜您抢到了红包！</h2>
+                    <div class="result-amount" id="resultAmount">¥0.00</div>
+                    <p class="result-text">手气不错哦！</p>
+                    <div class="best-worst" id="bestWorst"></div>
+                    <button class="again-btn" id="againBtn">再来一个</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧统计信息 -->
+        <div class="stats-panel">
+            <h3>统计信息</h3>
+            <div class="stat-item">
+                <span>总金额：</span>
+                <span id="statTotalAmount">¥0.00</span>
+            </div>
+            <div class="stat-item">
+                <span>红包总数：</span>
+                <span id="statTotalCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>已抢金额：</span>
+                <span id="statGrabbedAmount">¥0.00</span>
+            </div>
+            <div class="stat-item">
+                <span>手气最佳：</span>
+                <span id="statBestLuck">暂无</span>
+            </div>
+            <div class="stat-item">
+                <span>运气最差：</span>
+                <span id="statWorstLuck">暂无</span>
             </div>
         </div>
     </div>
+    
+    <!-- 动画容器 -->
     <div class="coins-container" id="coinsContainer"></div>
+    
+    <!-- 音效元素 -->
+    <audio id="openSound" preload="auto"></audio>
+    <audio id="grabSound" preload="auto"></audio>
+    
     <script src="js/script.js"></script>
 </body>
 </html>
