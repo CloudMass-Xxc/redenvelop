@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抢红包互动游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>抢红包啦！</h1>
+        <div class="red-envelope" id="redEnvelope">
+            <div class="envelope-top"></div>
+            <div class="envelope-bottom"></div>
+            <span class="text">恭喜发财</span>
+        </div>
+        <div class="result-modal" id="resultModal">
+            <div class="modal-content">
+                <span class="close-btn" id="closeBtn">&times;</span>
+                <div class="result-amount" id="resultAmount">¥0.00</div>
+                <p class="result-text">恭喜您抢到了红包！</p>
+                <button class="again-btn" id="againBtn">再来一个</button>
+            </div>
+        </div>
+    </div>
+    <div class="coins-container" id="coinsContainer"></div>
+    <script src="js/script.js"></script>
+</body>
+</html>
