@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
         currentSkin: 'normal',
         userRecords: [],
         chatParticipants: ['刘备', '关羽', '张飞', '诸葛亮', '曹操', '曹植', '曹丕', '曹彰', '赵云'],
-        allGrabs: [] // 记录所有抢红包的信息
+        allGrabs: [], // 记录所有抢红包的信息
+        grabbedUsers: [] // 记录已经抢过红包的用户
     };
     
     // 粒子系统
@@ -133,6 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalAmount = parseFloat(totalAmountInput.value);
         const totalCount = parseInt(totalCountInput.value);
         
+        // 如果设置的红包个数大于参与者总数（包括用户），给出提示
+        const totalParticipants = gameState.chatParticipants.length + 1; // +1 是因为包含用户
+        if (totalCount > totalParticipants) {
+            alert(`红包个数不能超过参与者总数。当前有 ${totalParticipants} 个参与者（包括您），请将红包个数设置为 ${totalParticipants} 或更少。`);
+            return;
+        }
+        
         if (isNaN(totalAmount) || totalAmount <= 0) {
             alert('请输入有效的总金额');
             return;
@@ -157,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
         gameState.remainingPackets = totalCount;
         gameState.grabbedAmount = 0;
         gameState.allGrabs = [];
+        gameState.grabbedUsers = []; // 重置已抢用户列表
         
         // 更新UI
         remainingCount.textContent = `剩余 ${totalCount} 个`;
@@ -218,19 +227,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const participants = shuffleArray([...gameState.chatParticipants]);
         let participantIndex = 0;
         
-        // 开始模拟抢红包，虚拟人物可以抢完所有红包
+        // 开始模拟抢红包，虚拟人物可以抢完所有红包，但每个人只能抢一次
         function startGrabbing() {
             if (gameState.remainingPackets > 0) {
-                const participant = participants[participantIndex % participants.length];
-                participantIndex++;
+                // 查找下一个未抢过红包的参与者
+                let participant;
+                let attempts = 0;
+                while (true) {
+                    participant = participants[participantIndex % participants.length];
+                    participantIndex++;
+                    attempts++;
+                    
+                    // 如果这个参与者还没抢过，或者尝试次数过多（避免死循环）
+                    if (!gameState.grabbedUsers.includes(participant) || attempts > participants.length * 2) {
+                        break;
+                    }
+                    
+                    // 如果所有人都已经抢过了，就不再继续
+                    if (gameState.grabbedUsers.length >= participants.length) {
+                        break;
+                    }
+                }
+                
+                // 如果找不到未抢过的参与者或红包已抢完，结束
+                if (gameState.grabbedUsers.includes(participant) || gameState.remainingPackets <= 0) {
+                    return;
+                }
                 
                 // 模拟抢红包，间隔时间更短，看起来更激烈
-                setTimeout(() => {
-                    const amount = gameState.packetList.pop();
-                    gameState.remainingPackets--;
-                    gameState.remainingAmount -= amount;
-                    gameState.grabbedAmount += amount;
-                    gameState.allGrabs.push({ name: participant, amount: amount });
+                    setTimeout(() => {
+                        // 再次检查参与者是否已经抢过红包
+                        if (gameState.grabbedUsers.includes(participant)) {
+                            startGrabbing(); // 寻找下一个未抢过的参与者
+                            return;
+                        }
+                        
+                        const amount = gameState.packetList.pop();
+                        gameState.remainingPackets--;
+                        gameState.remainingAmount -= amount;
+                        gameState.grabbedAmount += amount;
+                        gameState.allGrabs.push({ name: participant, amount: amount });
+                        gameState.grabbedUsers.push(participant); // 记录已抢用户
                     
                     // 更新UI
                     addChatMessage(participant, `抢到了 ¥${amount.toFixed(2)}`, 'other');
@@ -265,19 +302,57 @@ document.addEventListener('DOMContentLoaded', function() {
         const participants = shuffleArray([...gameState.chatParticipants]);
         let participantIndex = 0;
         
-        // 继续模拟抢红包直到红包抢光
+        // 继续模拟抢红包直到红包抢光或所有人都抢过
         function continueGrabbing() {
             if (gameState.remainingPackets > 0) {
-                const participant = participants[participantIndex % participants.length];
-                participantIndex++;
+                // 查找下一个未抢过红包的参与者
+                let participant;
+                let attempts = 0;
+                while (true) {
+                    participant = participants[participantIndex % participants.length];
+                    participantIndex++;
+                    attempts++;
+                    
+                    // 如果这个参与者还没抢过，或者尝试次数过多（避免死循环）
+                    if (!gameState.grabbedUsers.includes(participant) || attempts > participants.length * 2) {
+                        break;
+                    }
+                    
+                    // 如果所有人都已经抢过了，就不再继续
+                    if (gameState.grabbedUsers.length >= participants.length) {
+                        break;
+                    }
+                }
+                
+                // 如果找不到未抢过的参与者或红包已抢完，结束
+                if (gameState.grabbedUsers.includes(participant) || gameState.remainingPackets <= 0) {
+                    // 检查是否所有人都抢过了，如果是，显示总结
+                    if (gameState.grabbedUsers.length >= participants.length + 1) { // +1 是因为包含用户
+                        setTimeout(() => {
+                            if (gameState.allGrabs.length > 0) {
+                                const sortedGrabs = [...gameState.allGrabs].sort((a, b) => b.amount - a.amount);
+                                addChatMessage('系统', `${sortedGrabs[0].name} 成为本次红包的手气最佳！`, 'lucky');
+                            }
+                            addChatMessage('系统', '所有人都已经抢过红包了！', 'system');
+                        }, 1000);
+                    }
+                    return;
+                }
                 
                 // 模拟抢红包
-                setTimeout(() => {
-                    const amount = gameState.packetList.pop();
-                    gameState.remainingPackets--;
-                    gameState.remainingAmount -= amount;
-                    gameState.grabbedAmount += amount;
-                    gameState.allGrabs.push({ name: participant, amount: amount });
+                    setTimeout(() => {
+                        // 再次检查参与者是否已经抢过红包
+                        if (gameState.grabbedUsers.includes(participant)) {
+                            continueGrabbing(); // 寻找下一个未抢过的参与者
+                            return;
+                        }
+                        
+                        const amount = gameState.packetList.pop();
+                        gameState.remainingPackets--;
+                        gameState.remainingAmount -= amount;
+                        gameState.grabbedAmount += amount;
+                        gameState.allGrabs.push({ name: participant, amount: amount });
+                        gameState.grabbedUsers.push(participant); // 记录已抢用户
                     
                     // 更新UI
                     addChatMessage(participant, `抢到了 ¥${amount.toFixed(2)}`, 'other');
@@ -309,6 +384,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleRedEnvelopeClick() {
         if (gameState.isOpened) return;
         
+        // 检查用户是否已经抢过红包
+        if (gameState.grabbedUsers.includes('我')) {
+            // 用户已经抢过，显示提示
+            addChatMessage('系统', '您已经抢过红包了！', 'system');
+            return;
+        }
+        
         // 检查是否还有红包可抢
         if (gameState.remainingPackets <= 0) {
             // 红包已被抢完，显示提示
@@ -333,6 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 记录用户抢红包信息
         gameState.allGrabs.push({ name: '我', amount: amount });
+        gameState.grabbedUsers.push('我'); // 记录已抢用户
         
         // 生成金币动画和Canvas动画
         createCoinAnimation();
@@ -415,8 +498,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新剩余数量显示
         remainingCount.textContent = `剩余 ${gameState.remainingPackets} 个`;
         
-        // 如果红包已抢完，禁用红包
-        if (gameState.remainingPackets <= 0) {
+        // 如果红包已抢完或用户已经抢过，禁用红包
+        if (gameState.remainingPackets <= 0 || gameState.grabbedUsers.includes('我')) {
             redEnvelope.classList.add('disabled');
         } else {
             redEnvelope.classList.remove('disabled');
